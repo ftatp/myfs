@@ -450,27 +450,52 @@ static int xmp_open(const char *path, struct fuse_file_info *fi)
 
 static int xmp_read(const char *path, char *buf, size_t size, off_t offset, struct fuse_file_info *fi)
 {
-  	char fullpath[PATH_MAX];
+  	char fullpaths[NUMOFDISK][PATH_MAX];
   	int fd;
   	int res;
+	
+
+	//int block_num = 0;
+	int read_point = 0;
+	//int read_size = 0;
+	//int loopcount = 0;
+	int ret = 0;
 
 	printf("In read!!!!!!!!!!!!!!!!!!!1\n");
 	printf("path: %s\n", path);
-	sprintf(fullpath, "%s%s", rand() % 2 == 0 ? global_context.driveA : global_context.driveB, path);
-	printf("fullpath: %s\n", fullpath);
+	sprintf(fullpaths[0], "%s%s", global_context.driveA, path);
+	sprintf(fullpaths[1], "%s%s", global_context.driveB, path);
+	printf("fullpath 1: %s, 2: %s\n", fullpaths[0], fullpaths[1]);
   	(void) fi;
-  	fd = open(fullpath, O_RDONLY);
-	printf("offset: %lld\n", offset);
-	if (fd == -1)
-		return -errno;
 
-	res = pread(fd, buf, size, offset);
-	if (res == -1)
-		res = -errno;
+	//printf("offset: %lld\n", offset);
+	//block_num = offset / STRIPESIZE;
 
-	close(fd);
+	//printf("Size: %lld\n", size);
+	for(int i = 0, res = 512; res == STRIPESIZE; i++){
+		fd = open(fullpaths[i % NUMOFDISK], O_RDONLY);
+		read_point = i / 2;
+		//block_num++;
+		if (fd == -1)
+			return -errno;
+
+		res = pread(fd, buf + i * STRIPESIZE, STRIPESIZE, read_point * STRIPESIZE);
+		printf("Parted buf: %s\n", buf + i * STRIPESIZE);
+		printf("res: %d\n", res);
+		if (res == -1)
+			res = -errno;
+		ret += res;
+		//loopcount++;
+		close(fd);
+		//if(res < STRIPESIZE)
+		//	break;
+	}
+	printf("out res: %s\n", res);
+
+	printf("Whole buf: %s\n", buf);
+	printf("ret: %d\n", ret);
 	printf("Out read!!!!!!!!!!!!!!!!\n\n\n");
-  	return res;
+  	return ret;
 }
 
 static int xmp_write(const char *path, const char *buf, size_t size,
