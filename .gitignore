@@ -86,3 +86,7 @@ tags
 # End of https://www.gitignore.io/api/c,vim,linux
 
 myfs
+
+*.pdf
+*.odt
+*.docx
