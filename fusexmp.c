@@ -75,6 +75,10 @@ static int xmp_getattr(const char *path, struct stat *stbuf)
 			printf("Error in getting attributes in %s!!!\n\n", fullpaths[0]);
 			return -errno;
 		}
+		if (!S_ISREG(stbuf->st_mode)){
+			break;
+		}
+			
 		tmpsize += stbuf->st_size;
 		stbuf->st_size = tmpsize;
 	}
@@ -126,8 +130,7 @@ static int xmp_readlink(const char *path, char *buf, size_t size)
 }
 
 
-static int xmp_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
-		       off_t offset, struct fuse_file_info *fi)
+static int xmp_readdir(const char *path, void *buf, fuse_fill_dir_t filler, off_t offset, struct fuse_file_info *fi)
 {
 	char fullpath[PATH_MAX];
 
